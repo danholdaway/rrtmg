@@ -11,7 +11,6 @@ set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH})
 set( ECBUILD_DEFAULT_BUILD_TYPE Release )
 set( ENABLE_OS_TESTS           OFF CACHE BOOL "Disable OS tests" FORCE )
 set( ENABLE_LARGE_FILE_SUPPORT OFF CACHE BOOL "Disable testing of large file support" FORCE )
-set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
@@ -46,7 +45,7 @@ include_directories( ${NETCDF_INCLUDE_DIR} )
 # Export package info
 ################################################################################
 
-list( APPEND RRTMG_TPLS)
+list( APPEND RRTMG_TPLS NetCDF)
 
 set( RRTMG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} 
                           ${CMAKE_CURRENT_SOURCE_DIR}/src

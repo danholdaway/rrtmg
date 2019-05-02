@@ -52,4 +52,7 @@ ecbuild_add_library( TARGET          rrtmg
                      SOURCES         ${RRTMG_SRC_DEP}
                      LIBS            ${RRTMG_LIB_DEP}
                      INSTALL_HEADERS LISTED
+                     LINKER_LANGUAGE ${RRTMG_LINKER_LANGUAGE}
+
                    )
+

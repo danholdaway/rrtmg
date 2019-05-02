@@ -28,7 +28,8 @@ program lw_driver
  real, parameter :: MAPL_KAPPA = MAPL_RDRY/MAPL_CPDRY
 
  !Inputs from the NetCDF file
- character(len=2048) :: filename
+ character(len=2048) :: filename_in
+ character(len=2048) :: filename_out
  real, allocatable, dimension(:,:,:)   :: dp, t, q, qi, ql, ri, rl, o3, fcld
  real, allocatable, dimension(:,:)     :: ts, emis, lats
 
@@ -67,10 +68,8 @@ program lw_driver
  ie = 1                   !End point i direction
  je = 1                   !End point j direction
 
- filename = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_in.lcv.20190401_0000z.nc4'
-
- !Open file
- eid = nf90_open(trim(filename), NF90_NOWRITE, ncid)
+ filename_in  = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_in.lcv.20190401_0000z.nc4'
+ filename_out = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_out.lcv.20190401_0000z.nc4'
 
  ! Data dimensions
  ! ---------------
@@ -94,8 +93,6 @@ program lw_driver
  ! Read inputs from the NetCDF file
  ! --------------------------------
 
- !dp, t, q, qi, ql, ri, rl, o3, fcld, ts, emis, lats
-
  allocate(  dp(im,jm,lm))
  allocate(   t(im,jm,lm))
  allocate(   q(im,jm,lm))
@@ -109,6 +106,13 @@ program lw_driver
  allocate(  ts(im,jm))
  allocate(emis(im,jm))
  allocate(lats(im,jm))
+
+ !Open input file
+ eid = nf90_open(trim(filename_in), NF90_NOWRITE, ncid)
+
+
+ !Open output file
+ eid = nf90_open(trim(filename_out), NF90_NOWRITE, ncid)
 
 
  ! Intermediate variable transforms
