@@ -1,3 +1,9 @@
+# Text files
+*.swp
+
+# Build dirs
+build*
+
 # Prerequisites
 *.d
 

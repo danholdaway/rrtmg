@@ -24,9 +24,8 @@ ecbuild_requires_macro_version( 2.5 )
 ecbuild_declare_project()
 
 ecbuild_enable_fortran( REQUIRED )
-ecbuild_add_cxx11_flags()
 
-set( RRTMG_LINKER_LANGUAGE CXX )
+set( RRTMG_LINKER_LANGUAGE Fortran )
 
 ################################################################################
 # Standard compiler flags
