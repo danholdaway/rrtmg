@@ -52,6 +52,5 @@ ecbuild_add_library( TARGET          rrtmg
                      SOURCES         ${rrtmg_src_files}
                      LIBS            ${NETCDF_LIBRARIES}
                      LINKER_LANGUAGE ${RRTMG_LINKER_LANGUAGE}
-                     TYPE            STATIC
                    )
 

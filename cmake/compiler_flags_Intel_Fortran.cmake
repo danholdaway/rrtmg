@@ -8,7 +8,7 @@ else( )
   set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qopenmp-stubs")
 endif( )
 
-set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -traceback -r8 -stack_temps -safe_cray_ptr -assume byterecl -ftz -align all -fno-alias -convert big_endian -fPIC -fpe0 -fp-model source -heap-arrays 32 -assume noold_maxminloc -align dcommons")
+set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -traceback -stack_temps -safe_cray_ptr -assume byterecl -ftz -align all -fno-alias -convert big_endian -fPIC -fpe0 -fp-model source -heap-arrays 32 -assume noold_maxminloc -align dcommons")
 
 ####################################################################
 # RELEASE FLAGS

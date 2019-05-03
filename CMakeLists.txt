@@ -30,8 +30,13 @@ set( RRTMG_LINKER_LANGUAGE Fortran )
 # Dependencies
 ################################################################################
 
+# MPI
+ecbuild_find_mpi( COMPONENTS Fortran )
+ecbuild_include_mpi()
+link_libraries(${MPI_Fortran_LIBRARIES})
+
 # NetCDF
-find_package( NetCDF REQUIRED COMPONENTS Fortran F90 C )
+find_package( NetCDF REQUIRED COMPONENTS Fortran F90 )
 include_directories( ${NETCDF_INCLUDE_DIR} )
 
 ################################################################################
@@ -40,7 +45,7 @@ include_directories( ${NETCDF_INCLUDE_DIR} )
 
 list( APPEND RRTMG_TPLS NetCDF)
 
-set( RRTMG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} 
+set( RRTMG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
                           ${CMAKE_CURRENT_SOURCE_DIR}/src
                           ${CMAKE_CURRENT_SOURCE_DIR}/src/rrtmg_lw/gcm_model/modules
                           ${CMAKE_Fortran_MODULE_DIRECTORY})
@@ -77,9 +82,3 @@ ecbuild_install_project( NAME rrtmg )
 
 # print the summary of the configuration
 ecbuild_print_summary()
-
-ecbuild_add_test( TARGET rrtmg_coding_norms
-                  TYPE SCRIPT
-                  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
-                  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )
-
