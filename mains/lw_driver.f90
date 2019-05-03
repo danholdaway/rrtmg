@@ -30,16 +30,20 @@ program lw_driver
  !Inputs from the NetCDF file
  character(len=2048) :: filename_in
  character(len=2048) :: filename_out
- real, allocatable, dimension(:,:,:)   :: dp, t, q, qi, ql, ri, rl, o3, fcld
- real, allocatable, dimension(:,:)     :: ts, emis, lats
+ character(len=20) :: field
+ real, allocatable, dimension(:,:,:)   :: pl, t, q, qi, ql, ri, rl, o3, fcld
+ real, allocatable, dimension(:,:)     :: ts, emis, lats, lons
+ real, allocatable, dimension(:,:,:)   :: flx_geos
 
- integer :: ncid, eid
+ integer :: ncid, varid
+ integer, allocatable, dimension(:)    :: istart3, icount3
+ integer, allocatable, dimension(:)    :: istart2, icount2
 
  !Intermediate variable transforms
  integer, parameter :: kice     = 1
  integer, parameter :: kliquid  = 2
  real, allocatable, dimension(:,:,:,:) :: reff, cwc
- real, allocatable, dimension(:,:,:)   :: ple, pl, tlev
+ real, allocatable, dimension(:,:,:)   :: ple, dp, tlev
 
  !Main inputs for the scheme
  real :: xx
@@ -57,9 +61,11 @@ program lw_driver
  integer :: lcldmh, lcldlm
 
  !Outputs
- real, allocatable, dimension(:,:)     :: uflx, dflx, uflxc, dflxc, duflx_dt, duflxc_dt
+ real, allocatable, dimension(:,:)     :: uflx, dflx, uflxc, dflxc, duflx_dt, duflxc_dt, delt, tsinst
  real, allocatable, dimension(:,:)     :: hr, hrc
  integer, allocatable, dimension(:,:)  :: cloudflag
+ real, allocatable, dimension(:,:,:)   :: flxu_int,flxd_int,dfdts
+ real, allocatable, dimension(:,:,:)   :: flx_int,flx
 
  ! User input
  ! ----------
@@ -93,7 +99,7 @@ program lw_driver
  ! Read inputs from the NetCDF file
  ! --------------------------------
 
- allocate(  dp(im,jm,lm))
+ allocate(  pl(im,jm,lm))
  allocate(   t(im,jm,lm))
  allocate(   q(im,jm,lm))
  allocate(  qi(im,jm,lm))
@@ -106,18 +112,99 @@ program lw_driver
  allocate(  ts(im,jm))
  allocate(emis(im,jm))
  allocate(lats(im,jm))
+ allocate(lons(im,jm))
+
+ allocate(flx_geos(im,jm,lm+1))
+
+ !Read ranges
+ allocate(istart3(4), icount3(4))
+ allocate(istart2(3), icount2(3))
+
+ istart3(1) = is; icount3(1) = ie - is + 1
+ istart3(2) = js; icount3(2) = je - js + 1
+ istart3(3) = 1 ; icount3(3) = lm
+ istart3(4) = 1 ; icount3(4) = 1
+
+ istart2(1) = is; icount2(1) = ie - is + 1
+ istart2(2) = js; icount2(2) = je - js + 1
+ istart2(3) = 1 ; icount2(3) = 1
 
  !Open input file
- eid = nf90_open(trim(filename_in), NF90_NOWRITE, ncid)
+ call nccheck ( nf90_open(trim(filename_in), NF90_NOWRITE, ncid), "nf90_open"//trim(filename_in) )
+
+ field = "pl"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, pl, istart3, icount3 ),   "nf90_get_var "//trim(field) )
+
+ field = "t"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, t, istart3, icount3 ),    "nf90_get_var "//trim(field) )
+
+ field = "q"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, q, istart3, icount3 ),    "nf90_get_var "//trim(field) )
+
+ field = "qi"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, qi, istart3, icount3 ),   "nf90_get_var "//trim(field) )
+
+ field = "ql"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, ql, istart3, icount3 ),   "nf90_get_var "//trim(field) )
+
+ field = "ri"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, ri, istart3, icount3 ),   "nf90_get_var "//trim(field) )
+
+ field = "rl"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, rl, istart3, icount3 ),   "nf90_get_var "//trim(field) )
+
+ field = "o3"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, o3, istart3, icount3 ),   "nf90_get_var "//trim(field) )
+
+ field = "fcld"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, fcld, istart3, icount3 ), "nf90_get_var "//trim(field) )
+
+ field = "ts"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, ts, istart2, icount2 ),   "nf90_get_var "//trim(field) )
+
+ field = "emis"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, emis, istart2, icount2 ), "nf90_get_var "//trim(field) )
+
+ field = "lats"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, lats, istart2, icount2 ), "nf90_get_var "//trim(field) )
+
+ field = "lons"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, lons, istart2, icount2 ), "nf90_get_var "//trim(field) )
+
+ call nccheck ( nf90_close(ncid), "nf90_close" )
 
 
  !Open output file
- eid = nf90_open(trim(filename_out), NF90_NOWRITE, ncid)
+ call nccheck ( nf90_open(trim(filename_out), NF90_NOWRITE, ncid), "nf90_open"//trim(filename_out) )
 
+ icount3(3) = lm+1
+
+ field = "flx"
+ call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),         "nf90_inq_var "//trim(field) )
+ call nccheck ( nf90_get_var( ncid, varid, flx_geos, istart2, icount2 ), "nf90_get_var "//trim(field) )
+
+ call nccheck ( nf90_close(ncid), "nf90_close" )
+
+
+ deallocate(istart3, istart2)
+ deallocate(icount3, icount2)
 
  ! Intermediate variable transforms
  ! --------------------------------
- 
+
  !Cloud water content and effective radii
  allocate( cwc(im,jm,lm,2))
  allocate(reff(im,jm,lm,2))
@@ -129,17 +216,13 @@ program lw_driver
 
  !Pressures
  allocate(ple(im,jm,0:lm))
- allocate(pl (im,jm,lm))
+ allocate(dp (im,jm,lm))
 
  ple(:,:,0) = 1
  do k=1,lm
-   do j=js,je
-     do i=is,ie
-        ple(i,j,k) = ple(i,j,k-1) + dp(i,j,k) 
-     enddo
-   enddo
+   ple(:,:,k) = 2*pl(:,:,k) + ple(:,:,k-1)
+   dp(:,:,k) = ple(:,:,k)-ple(:,:,k-1)
  enddo
- pl = 0.5*(ple(:,:,1:lm)+ple(:,:,0:lm-1))
 
  !Temperature at levels
  allocate(tlev(im,jm,lm+1))
@@ -181,7 +264,7 @@ program lw_driver
      !2D fields
      tsfc(ij)    = ts(i,j)
      emiss(ij,:) = emis(i,j)
-     alat(ij)    = lats(i,j)
+     alat(ij)    = 0.0174533*lats(i,j)
 
      do k = 1,lm
 
@@ -287,7 +370,7 @@ program lw_driver
  call RRTMG_LW ( np,            &  ! Number of atmospheric profiles
                  lm,            &  ! Number of vertical levels
                  icld,          &  ! Cloud overlap method (hard wired to 4)
-                 idrv,          &  ! Flag for calculation of dFdT, the change 
+                 idrv,          &  ! Flag for calculation of dFdT, the change
                  PL_R,          &  !
                  PLE_R,         &  !
                  T_R,           &  !
@@ -307,16 +390,16 @@ program lw_driver
                  INFLGLW,       &  ! Flag for cloud optical properties
                  ICEFLGLW,      &  ! Flag for ice particle specification
                  LIQFLGLW,      &  ! Flag for liquid droplet specification
-                 FCLD_R,        &  ! 
+                 FCLD_R,        &  !
                  TAUCLD,        &  ! In-cloud optical depth
-                 CICEWP,        &  ! 
-                 CLIQWP,        &  ! 
-                 REICE,         &  ! 
-                 RELIQ,         &  ! 
+                 CICEWP,        &  !
+                 CLIQWP,        &  !
+                 REICE,         &  !
+                 RELIQ,         &  !
                  TAUAER,        &  ! Optical depth
-                 ZL_R,          &  ! 
-                 LCLDLM,        &  ! 
-                 LCLDMH,        &  ! 
+                 ZL_R,          &  !
+                 LCLDLM,        &  !
+                 LCLDMH,        &  !
                  UFLX,          &  ! Total sky longwave upward flux (W/m2)
                  DFLX,          &  ! Total sky longwave downward flux (W/m2)
                  HR,            &  ! Total sky longwave radiative heating rate (K/d)
@@ -326,18 +409,60 @@ program lw_driver
                  DUFLX_DT,      &  ! Change in upward longwave flux (w/m2/K)
                  DUFLXC_DT,     &  ! Change in clear sky upward longwave flux (w/m2/K)
                  CLOUDFLAG,     &  ! Optional output of cloudflag
-                 DOY,           &  ! 
-                 ALAT,          &  ! 
+                 DOY,           &  !
+                 ALAT,          &  !
                  corespernode,  &  ! Number of procs per node
                  partition_size )  ! Partition size (hardwired to 4)
 
+ allocate(flxu_int(im,jm,0:lm))
+ allocate(flxd_int(im,jm,0:lm))
+ allocate(dfdts   (im,jm,0:lm))
+ allocate(flx_int (im,jm,0:lm))
+ allocate(flx     (im,jm,0:lm))
+ allocate(delt    (im,jm))
+ allocate(tsinst  (im,jm))
+
+ ij = 0
+ do j=js,je
+   do i=is,ie
+     ij = ij + 1
+     do k=0,lm
+        lv = lm-k+1
+        flxu_int(i,j,k) =-uflx     (ij,lv)
+        flxd_int(i,j,k) = dflx     (ij,lv)
+        dfdts   (i,j,k) =-duflx_dt (ij,lv)
+     enddo
+   enddo
+ enddo
+
+ flx_int  = flxd_int + flxu_int
+
+ delt = 0.0 !tsinst - ts
+
+ do k = 0, lm
+   flx(:,:,k) = flx_int (:,:,k) + dfdts (:,:,k) * delt
+ enddo
+
+ !Write the result with what GEOS produced
+ open (unit = 101, file = "output.txt")
+ do j=js,je
+   do i=is,ie
+     do k=0,lm
+       write(101,*) 'Profile print versus GEOS'
+       write(101,*) 'Latitude', lats(i,j), ',  longitude', lons(i,j)
+       write(101,*) flx_geos(i,j,k), flx(i,j,k)
+     enddo
+   enddo
+ enddo
+ close(101)
+
  ! Deallocate memory
  ! -----------------
- deallocate(dp, t, q, qi, ql, ri, rl, o3, fcld)
- deallocate(ts, emis, lats)
+ deallocate(pl, t, q, qi, ql, ri, rl, o3, fcld)
+ deallocate(ts, emis, lats, lons)
 
  deallocate(reff, cwc)
- deallocate(ple, pl, tlev)
+ deallocate(ple, dp, tlev)
 
  deallocate(pl_r, ple_r, t_r, tlev_r)
  deallocate(tsfc)
@@ -352,33 +477,37 @@ program lw_driver
  deallocate(hr, hrc)
  deallocate(cloudflag)
 
+ deallocate(flxu_int,flxd_int,dfdts,flx_int,flx)
+
  contains
 
 ! ------------------------------------------------------------------------------
 
-! subroutine nccheck(status,iam)
-! 
-!  implicit none
-!  integer, intent ( in) :: status
-!  character(len=*), optional :: iam 
-!  
-!  character(len=1024) :: error_descr
-! 
-!  if(status /= nf90_noerr) then
-! 
-!    error_descr = "NetCDF error, aborting ... "
-! 
-!    if (present(iam)) then
-!      error_descr = trim(error_descr)//", "//trim(iam)
-!    endif
-! 
-!    error_descr = trim(error_descr)//". Error code: "//trim(nf90_strerror(status))
-! 
-!    !call abor1_ftn(trim(error_descr))
-! 
-!  end if
-! 
-! end subroutine nccheck
+ subroutine nccheck(status,iam)
+
+  implicit none
+  integer, intent ( in) :: status
+  character(len=*), optional :: iam
+
+  character(len=1024) :: error_descr
+
+  if(status /= nf90_noerr) then
+
+    error_descr = "NetCDF error, aborting ... "
+
+    if (present(iam)) then
+      error_descr = trim(error_descr)//", "//trim(iam)
+    endif
+
+    error_descr = trim(error_descr)//". Error code: "//trim(nf90_strerror(status))
+
+    print*, "Aborting: ", trim(error_descr)
+
+    call abort()
+
+  end if
+
+ end subroutine nccheck
 
 ! ------------------------------------------------------------------------------
 

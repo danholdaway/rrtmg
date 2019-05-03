@@ -27,18 +27,11 @@ ecbuild_enable_fortran( REQUIRED )
 set( RRTMG_LINKER_LANGUAGE Fortran )
 
 ################################################################################
-# Standard compiler flags
-################################################################################
-
-include( rrtmg_compiler_flags )
-
-################################################################################
 # Dependencies
 ################################################################################
 
 # NetCDF
-set( NETCDF_F90 ON CACHE BOOL "Compile with Fortran NetCDF" )
-find_package( NetCDF REQUIRED )
+find_package( NetCDF REQUIRED COMPONENTS Fortran F90 C )
 include_directories( ${NETCDF_INCLUDE_DIR} )
 
 ################################################################################
@@ -66,6 +59,8 @@ endforeach()
 ################################################################################
 # Sources
 ################################################################################
+
+include( rrtmg_compiler_flags )
 
 include_directories( ${RRTMG_INCLUDE_DIRS}
                      ${RRTMG_EXTRA_INCLUDE_DIRS} )

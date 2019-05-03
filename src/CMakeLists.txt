@@ -49,10 +49,9 @@ list (APPEND RRTMG_SRC_DEP ${rrtmg_src_files} )
 
 #Add the library
 ecbuild_add_library( TARGET          rrtmg
-                     SOURCES         ${RRTMG_SRC_DEP}
-                     LIBS            ${RRTMG_LIB_DEP}
-                     INSTALL_HEADERS LISTED
+                     SOURCES         ${rrtmg_src_files}
+                     LIBS            ${NETCDF_LIBRARIES}
                      LINKER_LANGUAGE ${RRTMG_LINKER_LANGUAGE}
-
+                     TYPE            STATIC
                    )
 
