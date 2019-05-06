@@ -41,6 +41,14 @@ rrtmg_lw/gcm_model/src/rrtmg_lw_setcoef.F90
 rrtmg_lw/gcm_model/src/WaterDistributionMod.F90
 )
 
+if (CMAKE_BUILD_TYPE MATCHES Release)
+   if ("${CMAKE_Fortran_COMPILER_ID}" MATCHES "GNU")
+      set_source_files_properties( rrtmg_lw_k_g.F90 PROPERTIES COMPILE_FLAGS "-O1 -fno-var-tracking")
+   else ()
+      set_source_files_properties( rrtmg_lw_k_g.F90 PROPERTIES COMPILE_FLAGS "-O1")
+   endif ()
+endif ()
+
 #Append includes and libraries with particular model 
 list (APPEND RRTMG_LIB_DEP ${NETCDF_LIBRARIES})
 

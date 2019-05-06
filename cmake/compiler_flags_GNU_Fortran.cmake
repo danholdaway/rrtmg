@@ -8,13 +8,15 @@ else( )
   set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-openmp")
 endif( )
 
-set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fdefault-real-8 -fdefault-double-8 -fcray-pointer -fconvert=big-endian -ffree-line-length-none -fno-range-check -fbacktrace")
+set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}")
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions ")
+set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -mtune=generic -funroll-loops -g -D__GFORTRAN__ -ffree-line-length-none -fno-range-check -Wno-missing-include-dirs -fPIC -ffpe-trap=zero,overflow -fbacktrace -falign-commons")
+
+set_source_files_properties(rrtmg_lw_k_g.F90 PROPERTIES CMAKE_Fortran_FLAGS_RELEASE "-O1")
 
 ####################################################################
 # DEBUG FLAGS

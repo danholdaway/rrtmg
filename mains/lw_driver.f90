@@ -88,8 +88,8 @@ program lw_driver
  ie = 1                   !End point i direction
  je = 1                   !End point j direction
 
- filename_in  = '/gpfsm/dnb31/drholdaw/wrk.f522dh/f522_dh.trainingdata_in.lcv.20190401_0000z.nc4'  !Training data in
- filename_out = '/gpfsm/dnb31/drholdaw/wrk.f522dh/f522_dh.trainingdata_out.lcv.20190401_0000z.nc4' !Training data out
+ filename_in  = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingDataNEW/f522_dh.trainingdata_in.lcv.20190401_0000z.nc4'  !Training data in
+ filename_out = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingDataNEW/f522_dh.trainingdata_out.lcv.20190401_0000z.nc4' !Training data out
 
  doy = 90                 !Which day of the year is it?
 
