@@ -6,17 +6,22 @@ implicit none
 
 private
 
+public :: configuration
 public :: datafields, allocate_fields, deallocate_fields, copy_fields, read_fields
 public :: fluxfields, allocate_fluxes, deallocate_fluxes, compare_fluxes
 public :: jacobianmat, allocate_jacobian, deallocate_jacobian, write_jacobian
 
-
-type datafields
+! Configuration settings
+type configuration
  character(len=2048) :: filename_in
  character(len=2048) :: filename_out
  integer :: im,jm,lm
  integer :: is,ie,js,je
  integer :: doy
+end type configuration
+
+! Field that are read from file
+type datafields
  real, allocatable, dimension(:,:,:) :: pl
  real, allocatable, dimension(:,:,:) :: t
  real, allocatable, dimension(:,:,:) :: q
@@ -34,11 +39,13 @@ type datafields
  real, allocatable, dimension(:,:,:) :: dfdts
 end type datafields
 
+! Fields that are computed by the scheme
 type fluxfields
  real, allocatable, dimension(:,:,:) :: flx
  real, allocatable, dimension(:,:,:) :: dfdts
 end type fluxfields
 
+! Jacobian matrix
 type jacobianmat
  character(len=2048) :: filename_out
  real, allocatable, dimension(:,:) :: dflxdpl
@@ -61,33 +68,30 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine allocate_fields(fields)
+subroutine allocate_fields(config,fields)
 
  implicit none
 
- type(datafields), intent(inout) :: fields
+ type(configuration), intent(in)    :: config
+ type(datafields),    intent(inout) :: fields
 
- fields%im = (fields%ie-fields%is+1)
- fields%jm = (fields%je-fields%js+1)
- fields%lm = 72
+ allocate(  fields%pl(config%im,config%jm,config%lm))
+ allocate(   fields%t(config%im,config%jm,config%lm))
+ allocate(   fields%q(config%im,config%jm,config%lm))
+ allocate(  fields%qi(config%im,config%jm,config%lm))
+ allocate(  fields%ql(config%im,config%jm,config%lm))
+ allocate(  fields%ri(config%im,config%jm,config%lm))
+ allocate(  fields%rl(config%im,config%jm,config%lm))
+ allocate(  fields%o3(config%im,config%jm,config%lm))
+ allocate(fields%fcld(config%im,config%jm,config%lm))
 
- allocate(  fields%pl(fields%im,fields%jm,fields%lm))
- allocate(   fields%t(fields%im,fields%jm,fields%lm))
- allocate(   fields%q(fields%im,fields%jm,fields%lm))
- allocate(  fields%qi(fields%im,fields%jm,fields%lm))
- allocate(  fields%ql(fields%im,fields%jm,fields%lm))
- allocate(  fields%ri(fields%im,fields%jm,fields%lm))
- allocate(  fields%rl(fields%im,fields%jm,fields%lm))
- allocate(  fields%o3(fields%im,fields%jm,fields%lm))
- allocate(fields%fcld(fields%im,fields%jm,fields%lm))
+ allocate(  fields%ts(config%im,config%jm))
+ allocate(fields%emis(config%im,config%jm))
+ allocate(fields%lats(config%im,config%jm))
+ allocate(fields%lons(config%im,config%jm))
 
- allocate(  fields%ts(fields%im,fields%jm))
- allocate(fields%emis(fields%im,fields%jm))
- allocate(fields%lats(fields%im,fields%jm))
- allocate(fields%lons(fields%im,fields%jm))
-
- allocate(fields%flx  (fields%im,fields%jm,0:fields%lm))
- allocate(fields%dfdts(fields%im,fields%jm,0:fields%lm))
+ allocate(fields%flx  (config%im,config%jm,0:config%lm))
+ allocate(fields%dfdts(config%im,config%jm,0:config%lm))
 
 end subroutine allocate_fields
 
@@ -148,15 +152,15 @@ end subroutine copy_fields
 
 ! ------------------------------------------------------------------------------
 
-subroutine allocate_fluxes(fluxes,fields)
+subroutine allocate_fluxes(config,fluxes)
 
  implicit none
 
- type(fluxfields), intent(inout) :: fluxes
- type(datafields), intent(in)    :: fields
+ type(configuration), intent(in)    :: config
+ type(fluxfields),    intent(inout) :: fluxes
 
- allocate(fluxes%flx  (fields%im,fields%jm,0:fields%lm))
- allocate(fluxes%dfdts(fields%im,fields%jm,0:fields%lm))
+ allocate(fluxes%flx  (config%im,config%jm,0:config%lm))
+ allocate(fluxes%dfdts(config%im,config%jm,0:config%lm))
 
 end subroutine allocate_fluxes
 
@@ -175,24 +179,24 @@ end subroutine deallocate_fluxes
 
 ! ------------------------------------------------------------------------------
 
-subroutine allocate_jacobian(jacobian,fields)
+subroutine allocate_jacobian(config,jacobian)
 
  implicit none
 
- type(jacobianmat), intent(inout) :: jacobian
- type(datafields), intent(in)    :: fields
+ type(configuration), intent(in)    :: config
+ type(jacobianmat),   intent(inout) :: jacobian
 
- allocate(jacobian%dflxdpl  (fields%lm,fields%lm))
- allocate(jacobian%dflxdt   (fields%lm,fields%lm))
- allocate(jacobian%dflxdq   (fields%lm,fields%lm))
- allocate(jacobian%dflxdqi  (fields%lm,fields%lm))
- allocate(jacobian%dflxdql  (fields%lm,fields%lm))
- allocate(jacobian%dflxdri  (fields%lm,fields%lm))
- allocate(jacobian%dflxdrl  (fields%lm,fields%lm))
- allocate(jacobian%dflxdo3  (fields%lm,fields%lm))
- allocate(jacobian%dflxdfcld(fields%lm,fields%lm))
- allocate(jacobian%dflxdts  (fields%lm))
- allocate(jacobian%dflxdemis(fields%lm))
+ allocate(jacobian%dflxdpl  (config%lm,config%lm))
+ allocate(jacobian%dflxdt   (config%lm,config%lm))
+ allocate(jacobian%dflxdq   (config%lm,config%lm))
+ allocate(jacobian%dflxdqi  (config%lm,config%lm))
+ allocate(jacobian%dflxdql  (config%lm,config%lm))
+ allocate(jacobian%dflxdri  (config%lm,config%lm))
+ allocate(jacobian%dflxdrl  (config%lm,config%lm))
+ allocate(jacobian%dflxdo3  (config%lm,config%lm))
+ allocate(jacobian%dflxdfcld(config%lm,config%lm))
+ allocate(jacobian%dflxdts  (config%lm))
+ allocate(jacobian%dflxdemis(config%lm))
 
 end subroutine allocate_jacobian
 
@@ -220,22 +224,24 @@ end subroutine deallocate_jacobian
 
 ! ------------------------------------------------------------------------------
 
-subroutine write_jacobian(jacobian)
+subroutine write_jacobian(config,jacobian)
 
  implicit none
 
- type(jacobianmat), intent(inout) :: jacobian
+ type(configuration), intent(in)    :: config
+ type(jacobianmat),   intent(inout) :: jacobian
 
 
 end subroutine write_jacobian
 
 ! ------------------------------------------------------------------------------
 
-subroutine read_fields(fields)
+subroutine read_fields(config,fields)
 
  implicit none
 
- type(datafields), intent(inout) :: fields
+ type(configuration), intent(in)    :: config
+ type(datafields),    intent(inout) :: fields
 
  integer :: ncid, varid
  integer, allocatable, dimension(:)    :: istart3, icount3
@@ -249,20 +255,20 @@ subroutine read_fields(fields)
  allocate(istart3(4), icount3(4))
  allocate(istart2(3), icount2(3))
 
- istart3(1) = fields%is; icount3(1) = fields%ie - fields%is + 1
- istart3(2) = fields%js; icount3(2) = fields%je - fields%js + 1
- istart3(3) = 1 ; icount3(3) = fields%lm
+ istart3(1) = config%is; icount3(1) = config%ie - config%is + 1
+ istart3(2) = config%js; icount3(2) = config%je - config%js + 1
+ istart3(3) = 1 ; icount3(3) = config%lm
  istart3(4) = 1 ; icount3(4) = 1
 
- istart2(1) = fields%is; icount2(1) = fields%ie - fields%is + 1
- istart2(2) = fields%js; icount2(2) = fields%je - fields%js + 1
+ istart2(1) = config%is; icount2(1) = config%ie - config%is + 1
+ istart2(2) = config%js; icount2(2) = config%je - config%js + 1
  istart2(3) = 1 ; icount2(3) = 1
 
 
  ! Input file
  ! ----------
 
- call nccheck ( nf90_open(trim(fields%filename_in), NF90_NOWRITE, ncid), "nf90_open"//trim(fields%filename_in) )
+ call nccheck ( nf90_open(trim(config%filename_in), NF90_NOWRITE, ncid), "nf90_open"//trim(config%filename_in) )
 
  field = "pl"
  call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),          "nf90_inq_var "//trim(field) )
@@ -322,12 +328,12 @@ subroutine read_fields(fields)
  ! Output file
  ! -----------
 
- allocate(flxu_int(fields%im,fields%jm,0:fields%lm))
- allocate(flxd_int(fields%im,fields%jm,0:fields%lm))
+ allocate(flxu_int(config%im,config%jm,0:config%lm))
+ allocate(flxd_int(config%im,config%jm,0:config%lm))
 
- call nccheck ( nf90_open(trim(fields%filename_out), NF90_NOWRITE, ncid), "nf90_open"//trim(fields%filename_out) )
+ call nccheck ( nf90_open(trim(config%filename_out), NF90_NOWRITE, ncid), "nf90_open"//trim(config%filename_out) )
 
- icount3(3) = fields%lm+1
+ icount3(3) = config%lm+1
 
  field = "flxu"
  call nccheck ( nf90_inq_varid( ncid, trim(field), varid ),                 "nf90_inq_var "//trim(field) )
@@ -384,11 +390,12 @@ subroutine nccheck(status,iam)
 
 ! ------------------------------------------------------------------------------
 
-subroutine compare_fluxes(fields,fluxes)
+subroutine compare_fluxes(config,fields,fluxes)
 
  implicit none
- type(datafields), intent(in)    :: fields
- type(fluxfields), intent(inout) :: fluxes
+ type(configuration), intent(in) :: config
+ type(datafields),    intent(in) :: fields
+ type(fluxfields),    intent(in) :: fluxes
 
  integer :: i,j,k
  real, allocatable, dimension(:,:) :: flx_err
@@ -396,31 +403,31 @@ subroutine compare_fluxes(fields,fluxes)
 
  !Write the result with what GEOS produced
  open (unit = 101, file = "output.txt")
- do j=fields%js,fields%je
-   do i=fields%is,fields%ie
+ do j=config%js,config%je
+   do i=config%is,config%ie
      write(101,*) 'Profile print versus GEOS'
      write(101,*) 'Latitude', fields%lats(i,j), ',  longitude', fields%lons(i,j)
      write(101,*) ' '
      write(101,*) ' flx'
-     do k=0,fields%lm
+     do k=0,config%lm
        write(101,*) fields%flx(i,j,k), fluxes%flx(i,j,k), 100*abs(fields%flx(i,j,k)-fluxes%flx(i,j,k))/(fields%flx(i,j,k)+1e-6)
      enddo
      write(101,*) ' dfdts '
-     do k=0,fields%lm
+     do k=0,config%lm
        write(101,*) fields%dfdts(i,j,k), fluxes%dfdts(i,j,k), 100*abs(fields%dfdts(i,j,k)-fluxes%dfdts(i,j,k))/(fields%dfdts(i,j,k)+1e-6)
      enddo
    enddo
  enddo
  close(101)
 
- allocate(flx_err(fields%im,fields%jm))
- allocate(dfdts_err(fields%im,fields%jm))
+ allocate(flx_err(config%im,config%jm))
+ allocate(dfdts_err(config%im,config%jm))
 
- flx_err = sqrt(sum((fields%flx-fluxes%flx)**2,3)/fields%lm)
- dfdts_err = sqrt(sum((fields%dfdts-fluxes%dfdts)**2,3)/fields%lm)
+ flx_err = sqrt(sum((fields%flx-fluxes%flx)**2,3)/config%lm)
+ dfdts_err = sqrt(sum((fields%dfdts-fluxes%dfdts)**2,3)/config%lm)
 
- do j=fields%js,fields%je
-   do i=fields%is,fields%ie
+ do j=config%js,config%je
+   do i=config%is,config%ie
      print*, i,j
      print*, 'flx rmse: ', flx_err(i,j)
      print*, 'dfdts rmse: ', dfdts_err(i,j)

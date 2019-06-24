@@ -5,6 +5,8 @@ program lw_driver
 
  implicit none
 
+ type(configuration) :: config
+
  type(datafields) :: fields
  type(fluxfields) :: fluxes
 
@@ -12,30 +14,37 @@ program lw_driver
 
  ! Some user input for the data to be used
  ! ---------------------------------------
- fields%is = 1                   !Starting point i direction
- fields%js = 1                   !Starting point j direction
- fields%ie = 1                  !End point i direction
- fields%je = 1                  !End point j direction
+ config%is = 1                  !Starting point i direction
+ config%js = 1                  !Starting point j direction
+ config%ie = 1                  !End point i direction
+ config%je = 1                  !End point j direction
 
- fields%filename_in  = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_in.lcv.20190401_0000z.nc4'  !Training data in
- fields%filename_out = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_out.lcv.20190401_0000z.nc4' !Training data out
+ config%filename_in  = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_in.lcv.20190401_0000z.nc4'  !Training data in
+ config%filename_out = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_out.lcv.20190401_0000z.nc4' !Training data out
 
- fields%doy = 90                 !Which day of the year is it?
+ config%doy = 90                 !Which day of the year is it?
 
+ config%im = (config%ie-config%is+1)
+ config%jm = (config%je-config%js+1)
+ config%lm = 72
+
+
+ ! Run component
+ ! -------------
 
  ! Allocate memory
- call allocate_fields(fields)
- call allocate_fluxes(fluxes,fields)
- call allocate_jacobian(jacobian,fields)
+ call allocate_fields(config,fields)
+ call allocate_fluxes(config,fluxes)
+ call allocate_jacobian(config,jacobian)
 
  ! Read fields from model output data
- call read_fields(fields)
+ call read_fields(config,fields)
 
  ! Call radiation scheme driver
- call rrtmg_lw_driver(fields,fluxes)
+ call rrtmg_lw_driver(config,fields,fluxes)
 
  ! Write the output comparison
- call write_jacobian(jacobian)
+ call write_jacobian(config,jacobian)
 
  ! Deallocate memory
  call deallocate_fields(fields)
