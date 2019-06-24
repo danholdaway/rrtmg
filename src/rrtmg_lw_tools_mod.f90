@@ -20,7 +20,7 @@ type configuration
  integer :: doy
 end type configuration
 
-! Field that are read from file
+! Fields that are read from file (training data)
 type datafields
  real, allocatable, dimension(:,:,:) :: pl
  real, allocatable, dimension(:,:,:) :: t
@@ -59,6 +59,17 @@ type jacobianmat
  real, allocatable, dimension(:,:) :: dflxdfcld
  real, allocatable, dimension(:)   :: dflxdts
  real, allocatable, dimension(:)   :: dflxdemis
+ real, allocatable, dimension(:,:) :: dfdtsdpl
+ real, allocatable, dimension(:,:) :: dfdtsdt
+ real, allocatable, dimension(:,:) :: dfdtsdq
+ real, allocatable, dimension(:,:) :: dfdtsdqi
+ real, allocatable, dimension(:,:) :: dfdtsdql
+ real, allocatable, dimension(:,:) :: dfdtsdri
+ real, allocatable, dimension(:,:) :: dfdtsdrl
+ real, allocatable, dimension(:,:) :: dfdtsdo3
+ real, allocatable, dimension(:,:) :: dfdtsdfcld
+ real, allocatable, dimension(:)   :: dfdtsdts
+ real, allocatable, dimension(:)   :: dfdtsdemis
 end type jacobianmat
 
 
@@ -198,6 +209,18 @@ subroutine allocate_jacobian(config,jacobian)
  allocate(jacobian%dflxdts  (config%lm))
  allocate(jacobian%dflxdemis(config%lm))
 
+ allocate(jacobian%dfdtsdpl  (config%lm,config%lm))
+ allocate(jacobian%dfdtsdt   (config%lm,config%lm))
+ allocate(jacobian%dfdtsdq   (config%lm,config%lm))
+ allocate(jacobian%dfdtsdqi  (config%lm,config%lm))
+ allocate(jacobian%dfdtsdql  (config%lm,config%lm))
+ allocate(jacobian%dfdtsdri  (config%lm,config%lm))
+ allocate(jacobian%dfdtsdrl  (config%lm,config%lm))
+ allocate(jacobian%dfdtsdo3  (config%lm,config%lm))
+ allocate(jacobian%dfdtsdfcld(config%lm,config%lm))
+ allocate(jacobian%dfdtsdts  (config%lm))
+ allocate(jacobian%dfdtsdemis(config%lm))
+
 end subroutine allocate_jacobian
 
 ! ------------------------------------------------------------------------------
@@ -220,17 +243,146 @@ subroutine deallocate_jacobian(jacobian)
  deallocate(jacobian%dflxdts)
  deallocate(jacobian%dflxdemis)
 
+ deallocate(jacobian%dfdtsdpl)
+ deallocate(jacobian%dfdtsdt)
+ deallocate(jacobian%dfdtsdq)
+ deallocate(jacobian%dfdtsdqi)
+ deallocate(jacobian%dfdtsdql)
+ deallocate(jacobian%dfdtsdri)
+ deallocate(jacobian%dfdtsdrl)
+ deallocate(jacobian%dfdtsdo3)
+ deallocate(jacobian%dfdtsdfcld)
+ deallocate(jacobian%dfdtsdts)
+ deallocate(jacobian%dfdtsdemis)
+
 end subroutine deallocate_jacobian
 
 ! ------------------------------------------------------------------------------
 
-subroutine write_jacobian(config,jacobian)
+subroutine write_jacobian(config,fields,jacobian)
 
  implicit none
 
- type(configuration), intent(in)    :: config
- type(jacobianmat),   intent(inout) :: jacobian
+ type(configuration), intent(in) :: config
+ type(datafields),    intent(in) :: fields
+ type(jacobianmat),   intent(in) :: jacobian
 
+ integer :: ncid, z_dimid, n_dimid, vc, varid(500)
+
+ call nccheck( nf90_create( trim(jacobian%filename_out), NF90_NETCDF4, ncid), "nf90_create" )
+
+ call nccheck ( nf90_def_dim(ncid, "lev", config%lm, z_dimid), "nf90_def_dim lev" )
+ call nccheck ( nf90_def_dim(ncid, "n",           1, n_dimid), "nf90_def_dim n"   )
+
+
+ ! Define mode
+ vc = 0
+
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "lat", NF90_DOUBLE, n_dimid, varid(vc)), "nf90_def_var lat" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "lon", NF90_DOUBLE, n_dimid, varid(vc)), "nf90_def_var lon" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdpl", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdpl" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdt", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdt" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdq", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdq" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdqi", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdqi" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdql", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdql" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdri", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdri" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdrl", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdrl" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdo3", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdo3" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdfcld", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dflxdfcld" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdts", NF90_DOUBLE, (/ z_dimid /), varid(vc)), "nf90_def_var dflxdts" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dflxdemis", NF90_DOUBLE, (/ z_dimid /), varid(vc)), "nf90_def_var dflxdemis" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdpl", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdpl" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdt", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdt" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdq", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdq" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdqi", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdqi" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdql", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdql" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdri", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdri" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdrl", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdrl" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdo3", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdo3" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdfcld", NF90_DOUBLE, (/ z_dimid, z_dimid /), varid(vc)), "nf90_def_var dfdtsdfcld" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdts", NF90_DOUBLE, (/ z_dimid /), varid(vc)), "nf90_def_var dfdtsdts" )
+ vc = vc + 1
+ call nccheck( nf90_def_var(ncid, "dfdtsdemis", NF90_DOUBLE, (/ z_dimid /), varid(vc)), "nf90_def_var dfdtsdemis" )
+
+ call nccheck( nf90_enddef(ncid), "nf90_enddef" )
+
+ ! Write mode
+ vc = 0
+
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), fields%lats(config%is,config%js) ), "nf90_put_var lat" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), fields%lons(config%is,config%js) ), "nf90_put_var lon" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdpl ), "nf90_put_var dflxdpl" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdt ), "nf90_put_var dflxdt" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdq ), "nf90_put_var dflxdq" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdqi ), "nf90_put_var dflxdqi" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdql ), "nf90_put_var dflxdql" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdri ), "nf90_put_var dflxdri" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdrl ), "nf90_put_var dflxdrl" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdo3 ), "nf90_put_var dflxdo3" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdfcld ), "nf90_put_var dflxdfcld" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdts ), "nf90_put_var dflxdts" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dflxdemis ), "nf90_put_var dflxdemis" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdpl ), "nf90_put_var dfdtsdpl" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdt ), "nf90_put_var dfdtsdt" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdq ), "nf90_put_var dfdtsdq" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdqi ), "nf90_put_var dfdtsdqi" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdql ), "nf90_put_var dfdtsdql" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdri ), "nf90_put_var dfdtsdri" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdrl ), "nf90_put_var dfdtsdrl" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdo3 ), "nf90_put_var dfdtsdo3" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdfcld ), "nf90_put_var dfdtsdfcld" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdts ), "nf90_put_var dfdtsdts" )
+ vc = vc + 1
+ call nccheck( nf90_put_var( ncid, varid(vc), jacobian%dfdtsdemis ), "nf90_put_var dfdtsdemis" )
+
+ ! Close file
+ call nccheck ( nf90_close(ncid), "nf90_close" )
 
 end subroutine write_jacobian
 
