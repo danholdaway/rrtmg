@@ -6,8 +6,10 @@ implicit none
 
 private
 
-public datafields, fluxfields, allocate_fields, deallocate_fields, read_fields
-public allocate_fluxes, deallocate_fluxes, compare_fluxes
+public :: datafields, allocate_fields, deallocate_fields, copy_fields, read_fields
+public :: fluxfields, allocate_fluxes, deallocate_fluxes, compare_fluxes
+public :: jacobianmat, allocate_jacobian, deallocate_jacobian, write_jacobian
+
 
 type datafields
  character(len=2048) :: filename_in
@@ -28,7 +30,6 @@ type datafields
  real, allocatable, dimension(:,:)   :: emis
  real, allocatable, dimension(:,:)   :: lats
  real, allocatable, dimension(:,:)   :: lons
- real, allocatable, dimension(:,:)   :: t2m
  real, allocatable, dimension(:,:,:) :: flx
  real, allocatable, dimension(:,:,:) :: dfdts
 end type datafields
@@ -37,6 +38,22 @@ type fluxfields
  real, allocatable, dimension(:,:,:) :: flx
  real, allocatable, dimension(:,:,:) :: dfdts
 end type fluxfields
+
+type jacobianmat
+ character(len=2048) :: filename_out
+ real, allocatable, dimension(:,:) :: dflxdpl
+ real, allocatable, dimension(:,:) :: dflxdt
+ real, allocatable, dimension(:,:) :: dflxdq
+ real, allocatable, dimension(:,:) :: dflxdqi
+ real, allocatable, dimension(:,:) :: dflxdql
+ real, allocatable, dimension(:,:) :: dflxdri
+ real, allocatable, dimension(:,:) :: dflxdrl
+ real, allocatable, dimension(:,:) :: dflxdo3
+ real, allocatable, dimension(:,:) :: dflxdfcld
+ real, allocatable, dimension(:)   :: dflxdts
+ real, allocatable, dimension(:)   :: dflxdemis
+end type jacobianmat
+
 
 ! ------------------------------------------------------------------------------
 
@@ -104,6 +121,33 @@ end subroutine deallocate_fields
 
 ! ------------------------------------------------------------------------------
 
+subroutine copy_fields(fields_lhs,fields_rhs)
+
+ implicit none
+
+ type(datafields), intent(inout) :: fields_lhs
+ type(datafields), intent(in)    :: fields_rhs
+
+ fields_lhs%pl    = fields_rhs%pl
+ fields_lhs%t     = fields_rhs%t
+ fields_lhs%q     = fields_rhs%q
+ fields_lhs%qi    = fields_rhs%qi
+ fields_lhs%ql    = fields_rhs%ql
+ fields_lhs%ri    = fields_rhs%ri
+ fields_lhs%rl    = fields_rhs%rl
+ fields_lhs%o3    = fields_rhs%o3
+ fields_lhs%fcld  = fields_rhs%fcld
+ fields_lhs%ts    = fields_rhs%ts
+ fields_lhs%emis  = fields_rhs%emis
+ fields_lhs%lats  = fields_rhs%lats
+ fields_lhs%lons  = fields_rhs%lons
+ fields_lhs%flx   = fields_rhs%flx
+ fields_lhs%dfdts = fields_rhs%dfdts
+
+end subroutine copy_fields
+
+! ------------------------------------------------------------------------------
+
 subroutine allocate_fluxes(fluxes,fields)
 
  implicit none
@@ -128,6 +172,62 @@ subroutine deallocate_fluxes(fluxes)
  deallocate(fluxes%dfdts)
 
 end subroutine deallocate_fluxes
+
+! ------------------------------------------------------------------------------
+
+subroutine allocate_jacobian(jacobian,fields)
+
+ implicit none
+
+ type(jacobianmat), intent(inout) :: jacobian
+ type(datafields), intent(in)    :: fields
+
+ allocate(jacobian%dflxdpl  (fields%lm,fields%lm))
+ allocate(jacobian%dflxdt   (fields%lm,fields%lm))
+ allocate(jacobian%dflxdq   (fields%lm,fields%lm))
+ allocate(jacobian%dflxdqi  (fields%lm,fields%lm))
+ allocate(jacobian%dflxdql  (fields%lm,fields%lm))
+ allocate(jacobian%dflxdri  (fields%lm,fields%lm))
+ allocate(jacobian%dflxdrl  (fields%lm,fields%lm))
+ allocate(jacobian%dflxdo3  (fields%lm,fields%lm))
+ allocate(jacobian%dflxdfcld(fields%lm,fields%lm))
+ allocate(jacobian%dflxdts  (fields%lm))
+ allocate(jacobian%dflxdemis(fields%lm))
+
+end subroutine allocate_jacobian
+
+! ------------------------------------------------------------------------------
+
+subroutine deallocate_jacobian(jacobian)
+
+ implicit none
+
+ type(jacobianmat), intent(inout) :: jacobian
+
+ deallocate(jacobian%dflxdpl)
+ deallocate(jacobian%dflxdt)
+ deallocate(jacobian%dflxdq)
+ deallocate(jacobian%dflxdqi)
+ deallocate(jacobian%dflxdql)
+ deallocate(jacobian%dflxdri)
+ deallocate(jacobian%dflxdrl)
+ deallocate(jacobian%dflxdo3)
+ deallocate(jacobian%dflxdfcld)
+ deallocate(jacobian%dflxdts)
+ deallocate(jacobian%dflxdemis)
+
+end subroutine deallocate_jacobian
+
+! ------------------------------------------------------------------------------
+
+subroutine write_jacobian(jacobian)
+
+ implicit none
+
+ type(jacobianmat), intent(inout) :: jacobian
+
+
+end subroutine write_jacobian
 
 ! ------------------------------------------------------------------------------
 
