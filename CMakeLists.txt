@@ -31,6 +31,9 @@ set( RRTMG_LINKER_LANGUAGE Fortran )
 ################################################################################
 
 # MPI
+
+set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
+
 ecbuild_find_mpi( COMPONENTS Fortran )
 ecbuild_include_mpi()
 link_libraries(${MPI_Fortran_LIBRARIES})

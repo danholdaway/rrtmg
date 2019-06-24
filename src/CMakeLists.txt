@@ -1,4 +1,7 @@
 list( APPEND rrtmg_src_files
+rrtmg_lw_tools_mod.f90
+rrtmg_lw_driver_mod.f90
+MAPL_Constants.F90
 rrtmg_lw/gcm_model/modules/dbmemory.F90
 rrtmg_lw/gcm_model/modules/_gpudef.inc
 rrtmg_lw/gcm_model/modules/_memdef.inc
@@ -41,11 +44,12 @@ rrtmg_lw/gcm_model/src/rrtmg_lw_setcoef.F90
 rrtmg_lw/gcm_model/src/WaterDistributionMod.F90
 )
 
+
 if (CMAKE_BUILD_TYPE MATCHES Release)
    if ("${CMAKE_Fortran_COMPILER_ID}" MATCHES "GNU")
-      set_source_files_properties( rrtmg_lw_k_g.F90 PROPERTIES COMPILE_FLAGS "-O1 -fno-var-tracking")
+      set_source_files_properties( rrtmg_lw/gcm_model/src/rrtmg_lw_k_g.F90 PROPERTIES COMPILE_FLAGS "-O1 -fno-var-tracking")
    else ()
-      set_source_files_properties( rrtmg_lw_k_g.F90 PROPERTIES COMPILE_FLAGS "-O1")
+      set_source_files_properties( rrtmg_lw/gcm_model/src/rrtmg_lw_k_g.F90 PROPERTIES COMPILE_FLAGS "-O1")
    endif ()
 endif ()
 
