@@ -87,8 +87,8 @@ subroutine rrtmg_lw_driver(config,fields,fluxes)
  ! --------------------------------
 
  !Cloud water content and effective radii
- allocate( cwc(config%im,config%jm,config%lm,2))
- allocate(reff(config%im,config%jm,config%lm,2))
+ allocate( cwc(config%is:config%ie,config%js:config%je,config%lm,2))
+ allocate(reff(config%is:config%ie,config%js:config%je,config%lm,2))
 
  cwc (:,:,:,kice   ) = fields%qi
  cwc (:,:,:,kliquid) = fields%ql
@@ -96,14 +96,14 @@ subroutine rrtmg_lw_driver(config,fields,fluxes)
  reff(:,:,:,kliquid) = fields%rl * 1.0e6
 
  !Pressures
- allocate(ple(config%im,config%jm,0:config%lm))
+ allocate(ple(config%is:config%ie,config%js:config%je,0:config%lm))
 
  ple(:,:,0) = 1.0
  do k=1,config%lm
    ple(:,:,k) = 2.0*fields%pl(:,:,k) - ple(:,:,k-1)
  enddo
 
- allocate(t2m(config%im,config%jm))
+ allocate(t2m(config%is:config%ie,config%js:config%je))
  t2m = fields%t(:,:,config%lm)*(0.5*(1.0 + ple(:,:,config%lm-1)/ple(:,:,config%lm)))**(-mapl_kappa)
 
  ! Main inputs for the scheme
@@ -308,8 +308,8 @@ subroutine rrtmg_lw_driver(config,fields,fluxes)
 ! Process outputs and write to file
 ! ---------------------------------
 
- allocate(flxu_int(config%im,config%jm,0:config%lm))
- allocate(flxd_int(config%im,config%jm,0:config%lm))
+ allocate(flxu_int(config%is:config%ie,config%js:config%je,0:config%lm))
+ allocate(flxd_int(config%is:config%ie,config%js:config%je,0:config%lm))
 
  ij = 0
  do j=config%js,config%je

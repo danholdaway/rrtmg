@@ -21,8 +21,8 @@ program lw_driver
 
  ! Some user input for the data to be used
  ! ---------------------------------------
- config%is = 1                  !Starting point i direction
- config%js = 1                  !End point i direction
+ config%is = 10                  !Starting point i direction
+ config%js = 10                  !End point i direction
  config%filename_in  = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_in.lcv.20190401_0000z.nc4'  !Training data in
  config%filename_out = '/gpfsm/dnb31/drholdaw/Victor/IRRADTrainingData/f522_dh.trainingdata_out.lcv.20190401_0000z.nc4' !Training data out
  config%doy = 90                !Which day of the year is it?
@@ -49,6 +49,8 @@ program lw_driver
 
  ! Read fields from model output data
  call read_fields(config,fields_traj)
+
+ print*, fields_traj%t(config%is,config%js,:)
 
  ! Number of vertical layers for each variables
  vark = config%lm
