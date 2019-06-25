@@ -86,23 +86,23 @@ subroutine allocate_fields(config,fields)
  type(configuration), intent(in)    :: config
  type(datafields),    intent(inout) :: fields
 
- allocate(  fields%pl(config%im,config%jm,config%lm))
- allocate(   fields%t(config%im,config%jm,config%lm))
- allocate(   fields%q(config%im,config%jm,config%lm))
- allocate(  fields%qi(config%im,config%jm,config%lm))
- allocate(  fields%ql(config%im,config%jm,config%lm))
- allocate(  fields%ri(config%im,config%jm,config%lm))
- allocate(  fields%rl(config%im,config%jm,config%lm))
- allocate(  fields%o3(config%im,config%jm,config%lm))
- allocate(fields%fcld(config%im,config%jm,config%lm))
+ allocate(  fields%pl(config%is:config%ie,config%js:config%je,config%lm))
+ allocate(   fields%t(config%is:config%ie,config%js:config%je,config%lm))
+ allocate(   fields%q(config%is:config%ie,config%js:config%je,config%lm))
+ allocate(  fields%qi(config%is:config%ie,config%js:config%je,config%lm))
+ allocate(  fields%ql(config%is:config%ie,config%js:config%je,config%lm))
+ allocate(  fields%ri(config%is:config%ie,config%js:config%je,config%lm))
+ allocate(  fields%rl(config%is:config%ie,config%js:config%je,config%lm))
+ allocate(  fields%o3(config%is:config%ie,config%js:config%je,config%lm))
+ allocate(fields%fcld(config%is:config%ie,config%js:config%je,config%lm))
 
- allocate(  fields%ts(config%im,config%jm))
- allocate(fields%emis(config%im,config%jm))
- allocate(fields%lats(config%im,config%jm))
- allocate(fields%lons(config%im,config%jm))
+ allocate(  fields%ts(config%is:config%ie,config%js:config%je))
+ allocate(fields%emis(config%is:config%ie,config%js:config%je))
+ allocate(fields%lats(config%is:config%ie,config%js:config%je))
+ allocate(fields%lons(config%is:config%ie,config%js:config%je))
 
- allocate(fields%flx  (config%im,config%jm,0:config%lm))
- allocate(fields%dfdts(config%im,config%jm,0:config%lm))
+ allocate(fields%flx  (config%is:config%ie,config%js:config%je,0:config%lm))
+ allocate(fields%dfdts(config%is:config%ie,config%js:config%je,0:config%lm))
 
 end subroutine allocate_fields
 
@@ -170,8 +170,8 @@ subroutine allocate_fluxes(config,fluxes)
  type(configuration), intent(in)    :: config
  type(fluxfields),    intent(inout) :: fluxes
 
- allocate(fluxes%flx  (config%im,config%jm,0:config%lm))
- allocate(fluxes%dfdts(config%im,config%jm,0:config%lm))
+ allocate(fluxes%flx  (config%is:config%ie,config%js:config%je,0:config%lm))
+ allocate(fluxes%dfdts(config%is:config%ie,config%js:config%je,0:config%lm))
 
 end subroutine allocate_fluxes
 
