@@ -8,7 +8,7 @@ else( )
   set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qopenmp-stubs")
 endif( )
 
-set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}")
+set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -traceback")
 
 ####################################################################
 # RELEASE FLAGS

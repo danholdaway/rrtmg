@@ -59,16 +59,12 @@ subroutine rrtmg_lw_driver(config,fields,fluxes)
  integer, allocatable, dimension(:,:)  :: cloudflag
  real, allocatable, dimension(:,:,:) :: flxu_int
  real, allocatable, dimension(:,:,:) :: flxd_int
- real, allocatable, dimension(:,:,:) :: flcu_int
- real, allocatable, dimension(:,:,:) :: flcd_int
- real, allocatable, dimension(:,:,:) :: dfdts
- real, allocatable, dimension(:,:,:) :: dfdtsc
 
  !Debugging write input/output
  logical :: write_inout = .false.
 
 
- np = config%im*config%jm               !Number of profiles
+ np = (config%ie-config%is+1) * (config%je-config%js+1)         !Number of profiles
  nb_rrtmg = 16            !Number of bands used in rrtmg
 
  ! Configuration for the rrtmg scheme
@@ -90,21 +86,23 @@ subroutine rrtmg_lw_driver(config,fields,fluxes)
  allocate( cwc(config%is:config%ie,config%js:config%je,config%lm,2))
  allocate(reff(config%is:config%ie,config%js:config%je,config%lm,2))
 
- cwc (:,:,:,kice   ) = fields%qi
- cwc (:,:,:,kliquid) = fields%ql
- reff(:,:,:,kice   ) = fields%ri * 1.0e6
- reff(:,:,:,kliquid) = fields%rl * 1.0e6
+ cwc (config%is:config%ie,config%js:config%je,:,kice   ) = fields%qi(config%is:config%ie,config%js:config%je,:)
+ cwc (config%is:config%ie,config%js:config%je,:,kliquid) = fields%ql(config%is:config%ie,config%js:config%je,:)
+ reff(config%is:config%ie,config%js:config%je,:,kice   ) = fields%ri(config%is:config%ie,config%js:config%je,:) * 1.0e6
+ reff(config%is:config%ie,config%js:config%je,:,kliquid) = fields%rl(config%is:config%ie,config%js:config%je,:) * 1.0e6
 
  !Pressures
  allocate(ple(config%is:config%ie,config%js:config%je,0:config%lm))
 
- ple(:,:,0) = 1.0
+ ple(config%is:config%ie,config%js:config%je,0) = 1.0
  do k=1,config%lm
-   ple(:,:,k) = 2.0*fields%pl(:,:,k) - ple(:,:,k-1)
+   ple(config%is:config%ie,config%js:config%je,k) = 2.0*fields%pl(config%is:config%ie,config%js:config%je,k) &
+                                                    - ple(config%is:config%ie,config%js:config%je,k-1)
  enddo
 
  allocate(t2m(config%is:config%ie,config%js:config%je))
- t2m = fields%t(:,:,config%lm)*(0.5*(1.0 + ple(:,:,config%lm-1)/ple(:,:,config%lm)))**(-mapl_kappa)
+ t2m = fields%t(config%is:config%ie,config%js:config%je,config%lm)*(0.5*(1.0 + ple(config%is:config%ie,config%js:config%je,config%lm-1)&
+                   /ple(config%is:config%ie,config%js:config%je,config%lm)))**(-mapl_kappa)
 
  ! Main inputs for the scheme
  ! --------------------------
@@ -324,32 +322,30 @@ subroutine rrtmg_lw_driver(config,fields,fluxes)
    enddo
  enddo
 
- fluxes%flx = flxd_int + flxu_int
+ fluxes%flx(config%is:config%ie,config%js:config%je,:) = flxd_int(config%is:config%ie,config%js:config%je,:) &
+                                                       + flxu_int(config%is:config%ie,config%js:config%je,:)
 
  ! Deallocate memory
  ! -----------------
 
  deallocate(reff, cwc)
- deallocate(ple, dp, tlev)
-
- deallocate(pl_r, ple_r, t_r, tlev_r)
+ deallocate(ple)
+ deallocate(TLEV)
+ deallocate(DP)
+ deallocate(pl_r, ple_r, t_r, tlev_r, t2m)
  deallocate(tsfc)
  deallocate(q_r, o3_r, emiss, fcld_r, cicewp, cliqwp)
  deallocate(reice, reliq, zl_r)
  deallocate(alat)
-
- deallocate(co2_r, ch4_r, n2o_r, cfc11_r, cfc12_r, cfc22_r, ccl4_r)
+ deallocate(co2_r, o2_r, ch4_r, n2o_r, cfc11_r, cfc12_r, cfc22_r, ccl4_r)
  deallocate(taucld, tauaer)
-
  deallocate(uflx, dflx, uflxc, dflxc, duflx_dt, duflxc_dt)
  deallocate(hr, hrc)
  deallocate(cloudflag)
-
  deallocate(flxu_int)
  deallocate(flxd_int)
 
  contains
-
 
  ! Write input
  ! -----------
@@ -484,4 +480,3 @@ end subroutine rrtmg_lw_driver
 ! ------------------------------------------------------------------------------
 
 end module rtmg_lw_driver_mod
-

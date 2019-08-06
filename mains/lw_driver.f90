@@ -22,8 +22,6 @@ program lw_driver
 
  config%doy = 90                 !Which day of the year is it?
 
- config%im = (config%ie-config%is+1)
- config%jm = (config%je-config%js+1)
  config%lm = 72
 
 
